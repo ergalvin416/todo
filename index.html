@@ -104,13 +104,23 @@
         }
         .subtask-item {
             margin-bottom: 8px;
-            font-size: 0.95rem;
             cursor: default;
         }
+        
+        /* Font sizing for hierarchy */
         .task-text {
             flex-grow: 1;
             word-break: break-word;
         }
+        .task-main .task-text {
+            font-size: 1.15rem;
+            font-weight: 600;
+        }
+        .subtask-item .task-text {
+            font-size: 0.95rem;
+            font-weight: 400;
+        }
+        
         .completed-text {
             text-decoration: line-through;
             color: #80868b;
