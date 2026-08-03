@@ -51,6 +51,11 @@
             align-items: center;
             margin-bottom: 1rem;
         }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
         h1, h2 {
             font-weight: 500;
             margin: 0;
@@ -63,6 +68,27 @@
             border: none;
             color: var(--default);
         }
+        
+        .auth-btn {
+            background-color: var(--blue);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .auth-btn:hover { background-color: #1557b0; }
+        
+        .login-message {
+            text-align: center;
+            padding: 2rem;
+            color: #5f6368;
+        }
+
+        #app-content { display: none; } /* Hidden until logged in */
+
         input[type="text"] {
             width: 100%;
             padding: 10px;
@@ -156,10 +182,12 @@
         .star-btn {
             font-size: 1.2rem;
             color: #fbbc04;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
         }
-        .star-btn.inactive {
-            color: var(--border);
-        }
+        .star-btn.inactive { color: var(--border); }
         .star-btn:hover { color: #fbbc04; }
         
         .action-toggle {
@@ -167,6 +195,10 @@
             padding: 0 5px;
             font-weight: bold;
             border-radius: 4px;
+            background: none;
+            border: none;
+            color: var(--default);
+            cursor: pointer;
         }
         .action-toggle:hover { background-color: var(--surface); }
         .action-menu {
@@ -199,7 +231,7 @@
         }
         .color-dot:hover { opacity: 0.8; }
         
-        button {
+        .icon-btn {
             background: none;
             border: none;
             cursor: pointer;
@@ -207,7 +239,7 @@
             font-size: 1rem;
             padding: 0 5px;
         }
-        button:hover { color: var(--default); }
+        .icon-btn:hover { color: var(--default); }
         .add-subtask {
             font-size: 0.85rem;
             color: var(--blue);
@@ -225,27 +257,113 @@
 <div class="container">
     <div class="header-row">
         <h1>My Tasks</h1>
-        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">🌙</button>
+        <div class="header-actions">
+            <button class="theme-toggle" onclick="window.toggleTheme()" title="Toggle Dark Mode">🌙</button>
+            <button id="auth-btn" class="auth-btn" onclick="window.handleAuth()">Login</button>
+        </div>
     </div>
-    <input type="text" id="new-task" placeholder="Add a new task... (Press Enter)" onkeypress="handleNewTask(event)">
+
+    <div id="login-message" class="login-message">
+        Please login to view and sync your tasks.
+    </div>
     
-    <div id="active-tasks" class="task-list"></div>
-    
-    <h2>Completed</h2>
-    <div id="completed-tasks" class="task-list"></div>
+    <div id="app-content">
+        <input type="text" id="new-task" placeholder="Add a new task... (Press Enter)" onkeypress="window.handleNewTask(event)">
+        
+        <div id="active-tasks" class="task-list"></div>
+        
+        <h2>Completed</h2>
+        <div id="completed-tasks" class="task-list"></div>
+    </div>
 </div>
 
-<script>
+<!-- Firebase SDKs configured as Modules -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // Your Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyArUbDcAmhwYPoXyVguO7e1lWI12XcLp64",
+        authDomain: "my-quick-tasks.firebaseapp.com",
+        projectId: "my-quick-tasks",
+        storageBucket: "my-quick-tasks.firebasestorage.app",
+        messagingSenderId: "790785167345",
+        appId: "1:790785167345:web:0bc5f6aa1d3f162a4f3e50"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
     // State management
-    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    let tasks = [];
+    let currentUser = null;
     let draggedId = null;
+
+    // Authentication Logic
+    window.handleAuth = () => {
+        if (currentUser) {
+            signOut(auth);
+        } else {
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider).catch(error => {
+                console.error("Login failed:", error);
+                alert("Login failed. Please try again.");
+            });
+        }
+    };
+
+    // Listen to login state changes
+    onAuthStateChanged(auth, (user) => {
+        const authBtn = document.getElementById('auth-btn');
+        const appContent = document.getElementById('app-content');
+        const loginMessage = document.getElementById('login-message');
+
+        if (user) {
+            currentUser = user;
+            authBtn.textContent = "Logout";
+            appContent.style.display = "block";
+            loginMessage.style.display = "none";
+
+            // Listen to cloud database changes in real-time
+            onSnapshot(doc(db, "users", user.uid), (docSnap) => {
+                if (docSnap.exists()) {
+                    tasks = docSnap.data().tasks || [];
+                } else {
+                    tasks = [];
+                }
+                render();
+            });
+        } else {
+            currentUser = null;
+            tasks = [];
+            authBtn.textContent = "Login";
+            appContent.style.display = "none";
+            loginMessage.style.display = "block";
+            render();
+        }
+    });
+
+    // Save to Cloud
+    async function saveTasks() {
+        if (!currentUser) return;
+        try {
+            await setDoc(doc(db, "users", currentUser.uid), { tasks: tasks });
+        } catch (e) {
+            console.error("Error saving document: ", e);
+            alert("Error saving to cloud. Check your connection.");
+        }
+    }
 
     // Theme Setup
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
     updateThemeIcon(savedTheme);
 
-    function toggleTheme() {
+    window.toggleTheme = () => {
         const currentTheme = document.documentElement.getAttribute('data-theme');
         const newTheme = currentTheme === 'light' ? 'dark' : 'light';
         document.documentElement.setAttribute('data-theme', newTheme);
@@ -257,13 +375,8 @@
         document.querySelector('.theme-toggle').textContent = theme === 'light' ? '🌙' : '☀️';
     }
 
-    function saveTasks() {
-        localStorage.setItem('tasks', JSON.stringify(tasks));
-        render();
-    }
-
     // Task Actions
-    function handleNewTask(e) {
+    window.handleNewTask = (e) => {
         if (e.key === 'Enter' && e.target.value.trim() !== '') {
             tasks.push({
                 id: Date.now(),
@@ -278,7 +391,7 @@
         }
     }
 
-    function addSubtask(taskId) {
+    window.addSubtask = (taskId) => {
         const text = prompt("Enter note/subtask:");
         if (text && text.trim() !== '') {
             const task = tasks.find(t => t.id === taskId);
@@ -293,7 +406,7 @@
         }
     }
 
-    function editTask(id, isSubtask = false, parentId = null) {
+    window.editTask = (id, isSubtask = false, parentId = null) => {
         if (isSubtask) {
             const parent = tasks.find(t => t.id === parentId);
             const sub = parent.subtasks.find(s => s.id === id);
@@ -312,7 +425,7 @@
         }
     }
 
-    function toggleTask(id, isSubtask = false, parentId = null) {
+    window.toggleTask = (id, isSubtask = false, parentId = null) => {
         if (isSubtask) {
             const parent = tasks.find(t => t.id === parentId);
             const sub = parent.subtasks.find(s => s.id === id);
@@ -324,20 +437,20 @@
         saveTasks();
     }
 
-    function toggleStar(id) {
+    window.toggleStar = (id) => {
         const task = tasks.find(t => t.id === id);
         task.starred = !task.starred;
         saveTasks();
     }
 
-    function deleteMainTask(id) {
+    window.deleteMainTask = (id) => {
         if(confirm("Are you sure you want to delete this task?")) {
             tasks = tasks.filter(t => t.id !== id);
             saveTasks();
         }
     }
 
-    function deleteSubtask(subId, parentId) {
+    window.deleteSubtask = (subId, parentId) => {
         if(confirm("Are you sure you want to delete this subtask?")) {
             const parent = tasks.find(t => t.id === parentId);
             parent.subtasks = parent.subtasks.filter(s => s.id !== subId);
@@ -345,7 +458,7 @@
         }
     }
 
-    function changeColor(id, color, isSubtask = false, parentId = null) {
+    window.changeColor = (id, color, isSubtask = false, parentId = null) => {
         if (isSubtask) {
             const parent = tasks.find(t => t.id === parentId);
             const sub = parent.subtasks.find(s => s.id === id);
@@ -358,13 +471,13 @@
     }
 
     // Drag and Drop Logic
-    function dragStart(e, id) {
+    window.dragStart = (e, id) => {
         draggedId = id;
         e.target.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
     }
 
-    function dragOver(e) {
+    window.dragOver = (e) => {
         e.preventDefault();
         const target = e.target.closest('.task-item');
         if (target && target.dataset.id != draggedId) {
@@ -372,12 +485,12 @@
         }
     }
 
-    function dragLeave(e) {
+    window.dragLeave = (e) => {
         const target = e.target.closest('.task-item');
         if (target) target.classList.remove('drag-over');
     }
 
-    function drop(e, targetId) {
+    window.drop = (e, targetId) => {
         e.preventDefault();
         const targetEl = e.target.closest('.task-item');
         if (targetEl) targetEl.classList.remove('drag-over');
@@ -394,13 +507,13 @@
         saveTasks();
     }
 
-    function dragEnd(e) {
+    window.dragEnd = (e) => {
         e.target.classList.remove('dragging');
         document.querySelectorAll('.task-item').forEach(el => el.classList.remove('drag-over'));
     }
 
     // Menu Logic
-    function toggleMenu(event) {
+    window.toggleMenu = (event) => {
         event.stopPropagation();
         const menu = event.currentTarget.nextElementSibling;
         document.querySelectorAll('.action-menu.show').forEach(m => {
@@ -421,7 +534,6 @@
         activeContainer.innerHTML = '';
         completedContainer.innerHTML = '';
 
-        // Separate and sort active tasks to keep starred at the top
         let activeTasks = tasks.filter(t => !t.completed);
         activeTasks.sort((a, b) => {
             if (a.starred === b.starred) return 0;
@@ -435,37 +547,33 @@
             const taskEl = document.createElement('div');
             taskEl.className = 'task-item';
             
-            // Add grayed out class if completed
-            if (task.completed) {
-                taskEl.classList.add('is-completed');
-            }
+            if (task.completed) taskEl.classList.add('is-completed');
             
             taskEl.dataset.id = task.id;
             
-            // Allow drag and drop only for active tasks
             if (!task.completed) {
                 taskEl.draggable = true;
-                taskEl.addEventListener('dragstart', (e) => dragStart(e, task.id));
-                taskEl.addEventListener('dragover', dragOver);
-                taskEl.addEventListener('dragleave', dragLeave);
-                taskEl.addEventListener('drop', (e) => drop(e, task.id));
-                taskEl.addEventListener('dragend', dragEnd);
+                taskEl.addEventListener('dragstart', (e) => window.dragStart(e, task.id));
+                taskEl.addEventListener('dragover', window.dragOver);
+                taskEl.addEventListener('dragleave', window.dragLeave);
+                taskEl.addEventListener('drop', (e) => window.drop(e, task.id));
+                taskEl.addEventListener('dragend', window.dragEnd);
             }
 
             let html = `
                 <div class="task-main">
                     <div class="task-content">
-                        <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${task.id})">
+                        <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="window.toggleTask(${task.id})">
                         ${task.color === 'purple' ? '<span class="purple-badge">?</span>' : ''}
                         <span class="task-text ${task.completed ? 'completed-text' : ''}" style="color: var(--${task.color})">${task.text}</span>
                     </div>
                     <div class="task-actions-wrapper">
-                        ${!task.completed ? `<button class="star-btn ${task.starred ? '' : 'inactive'}" onclick="toggleStar(${task.id})" title="Pin Task">${task.starred ? '⭐' : '☆'}</button>` : ''}
-                        <button class="action-toggle" onclick="toggleMenu(event)" title="Options">⋮</button>
+                        ${!task.completed ? `<button class="star-btn ${task.starred ? '' : 'inactive'}" onclick="window.toggleStar(${task.id})" title="Pin Task">${task.starred ? '⭐' : '☆'}</button>` : ''}
+                        <button class="action-toggle" onclick="window.toggleMenu(event)" title="Options">⋮</button>
                         <div class="action-menu">
                             ${!task.completed ? renderColorPicker(task.id, false) : ''}
-                            ${!task.completed ? `<button title="Edit Task" onclick="editTask(${task.id})">✏️</button>` : ''}
-                            <button class="delete-btn" title="Delete Task" onclick="deleteMainTask(${task.id})">🗑️</button>
+                            ${!task.completed ? `<button class="icon-btn" title="Edit Task" onclick="window.editTask(${task.id})">✏️</button>` : ''}
+                            <button class="icon-btn delete-btn" title="Delete Task" onclick="window.deleteMainTask(${task.id})">🗑️</button>
                         </div>
                     </div>
                 </div>
@@ -477,23 +585,23 @@
                     html += `
                         <div class="subtask-item">
                             <div class="task-content">
-                                <input type="checkbox" ${sub.completed ? 'checked' : ''} onchange="toggleTask(${sub.id}, true, ${task.id})">
+                                <input type="checkbox" ${sub.completed ? 'checked' : ''} onchange="window.toggleTask(${sub.id}, true, ${task.id})">
                                 ${sub.color === 'purple' ? '<span class="purple-badge">?</span>' : ''}
                                 <span class="task-text ${sub.completed ? 'completed-text' : ''}" style="color: var(--${sub.color})">${sub.text}</span>
                             </div>
                             <div class="task-actions-wrapper">
-                                <button class="action-toggle" onclick="toggleMenu(event)" title="Options">⋮</button>
+                                <button class="action-toggle" onclick="window.toggleMenu(event)" title="Options">⋮</button>
                                 <div class="action-menu">
                                     ${!sub.completed && !task.completed ? renderColorPicker(sub.id, true, task.id) : ''}
-                                    ${!sub.completed && !task.completed ? `<button title="Edit Subtask" onclick="editTask(${sub.id}, true, ${task.id})">✏️</button>` : ''}
-                                    ${!task.completed ? `<button class="delete-btn" title="Delete Subtask" onclick="deleteSubtask(${sub.id}, ${task.id})">🗑️</button>` : ''}
+                                    ${!sub.completed && !task.completed ? `<button class="icon-btn" title="Edit Subtask" onclick="window.editTask(${sub.id}, true, ${task.id})">✏️</button>` : ''}
+                                    ${!task.completed ? `<button class="icon-btn delete-btn" title="Delete Subtask" onclick="window.deleteSubtask(${sub.id}, ${task.id})">🗑️</button>` : ''}
                                 </div>
                             </div>
                         </div>
                     `;
                 });
                 if (!task.completed) {
-                    html += `<div class="add-subtask" onclick="addSubtask(${task.id})">+ Add note/subtask</div>`;
+                    html += `<div class="add-subtask" onclick="window.addSubtask(${task.id})">+ Add note/subtask</div>`;
                 }
                 html += `</div>`;
             }
@@ -512,14 +620,11 @@
         const colors = ['red', 'purple', 'blue', 'green', 'default'];
         let picker = '<div class="color-picker">';
         colors.forEach(c => {
-            picker += `<div class="color-dot" title="${c}" style="background-color: var(--${c})" onclick="changeColor(${id}, '${c}', ${isSubtask}, ${parentId || null})"></div>`;
+            picker += `<div class="color-dot" title="${c}" style="background-color: var(--${c})" onclick="window.changeColor(${id}, '${c}', ${isSubtask}, ${parentId || null})"></div>`;
         });
         picker += '</div>';
         return picker;
     }
-
-    // Initial render
-    render();
 </script>
 </body>
 </html>
