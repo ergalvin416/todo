@@ -75,10 +75,16 @@
             color: var(--default);
         }
         .task-list { margin-bottom: 2rem; }
+        
         .task-item {
             border-bottom: 1px solid var(--border);
             padding: 10px 0;
             cursor: grab;
+            transition: opacity 0.2s, filter 0.2s;
+        }
+        .task-item.is-completed {
+            opacity: 0.5;
+            filter: grayscale(40%);
         }
         .task-item.dragging {
             opacity: 0.5;
@@ -98,12 +104,14 @@
             gap: 10px;
             flex-grow: 1;
         }
+        
+        /* Compact Subtasks */
         .subtasks {
-            margin-left: 2rem;
-            margin-top: 10px;
+            margin-left: 2.2rem;
+            margin-top: 4px;
         }
         .subtask-item {
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             cursor: default;
         }
         
@@ -203,8 +211,8 @@
         .add-subtask {
             font-size: 0.85rem;
             color: var(--blue);
-            margin-left: 2rem;
-            margin-top: 5px;
+            margin-left: 2.2rem;
+            margin-top: 2px;
             cursor: pointer;
             display: inline-block;
         }
@@ -426,6 +434,12 @@
         sortedDisplayTasks.forEach(task => {
             const taskEl = document.createElement('div');
             taskEl.className = 'task-item';
+            
+            // Add grayed out class if completed
+            if (task.completed) {
+                taskEl.classList.add('is-completed');
+            }
+            
             taskEl.dataset.id = task.id;
             
             // Allow drag and drop only for active tasks
