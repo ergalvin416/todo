@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,71 +7,62 @@
     <!-- Inline SVG Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23fbbc04'/><path d='M28 53 L42 66 L74 34' fill='none' stroke='white' stroke-width='12' stroke-linecap='round' stroke-linejoin='round'/></svg>">
     <style>
+        /* Dedicated Dark Theme Palette */
         :root {
-            --red: #d93025;
-            --purple: #9c27b0;
-            --blue: #1a73e8;
-            --green: #1e8e3e;
-            --default: #202124;
-            --bg: #ffffff;
-            --surface: #f1f3f4;
-            --border: #dadce0;
-            --hover: #f8f9fa;
+            /* App Backgrounds */
+            --bg-main: #17181a;
+            --bg-col-1: #252628;
+            --bg-col-waiting: #1e1f21;
+            
+            /* Card Background Colors (Muted for dark mode) */
+            --card-default: #323438;
+            --card-red: #4d2727;
+            --card-purple: #3d2645;
+            --card-blue: #26394d;
+            --card-green: #25422d;
+
+            /* Subtask Text Colors (Brightened for readability on dark cards) */
+            --text-default: #e8eaed;
+            --text-red: #ff8a80;
+            --text-purple: #b388ff;
+            --text-blue: #8ab4f8;
+            --text-green: #81c995;
+
+            /* Utilities */
+            --border: #44474b;
+            --hover: #ffffff10;
+            --purple-badge: #9c27b0;
+            --star: #fbbc04;
         }
-        [data-theme="dark"] {
-            --red: #f28b82;
-            --purple: #d7bce6;
-            --blue: #8ab4f8;
-            --green: #81c995;
-            --default: #e8eaed;
-            --bg: #202124;
-            --surface: #303134;
-            --border: #5f6368;
-            --hover: #3c4043;
-        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--surface);
-            color: var(--default);
-            max-width: 650px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-            transition: background-color 0.3s, color 0.3s;
+            background-color: var(--bg-main);
+            color: var(--text-default);
+            margin: 0;
+            padding: 2rem 1rem;
+            min-height: 100vh;
         }
-        .container {
-            background: var(--bg);
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-            transition: background-color 0.3s;
-        }
-        .header-row {
+        
+        .top-nav {
+            max-width: 1400px;
+            margin: 0 auto 2rem auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
+            padding: 0 1rem;
         }
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        h1, h2 {
-            font-weight: 500;
-            margin: 0;
-        }
-        h2 { margin-top: 1rem; margin-bottom: 1rem; }
-        .theme-toggle {
-            font-size: 1.5rem;
-            cursor: pointer;
-            background: none;
-            border: none;
-            color: var(--default);
+
+        h1, h2 { font-weight: 500; margin: 0; }
+        .col-header { 
+            margin-bottom: 1rem; 
+            font-size: 1.3rem;
+            color: #ffffff;
         }
         
         .auth-btn {
-            background-color: var(--blue);
-            color: white;
+            background-color: #8ab4f8;
+            color: #202124;
             border: none;
             padding: 8px 16px;
             border-radius: 4px;
@@ -79,46 +70,94 @@
             font-weight: bold;
             font-size: 0.9rem;
         }
-        .auth-btn:hover { background-color: #1557b0; }
+        .auth-btn:hover { background-color: #aecbfa; }
         
         .login-message {
             text-align: center;
             padding: 2rem;
-            color: #5f6368;
+            color: #9aa0a6;
+            font-size: 1.2rem;
         }
 
-        #app-content { display: none; } /* Hidden until logged in */
+        #app-content { display: none; }
+
+        /* 3-Column Kanban Layout */
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            align-items: start;
+        }
+
+        .column {
+            background-color: var(--bg-col-1);
+            border-radius: 12px;
+            padding: 1rem;
+            min-height: 70vh;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border);
+        }
+
+        /* The Waiting Column Styling */
+        .col-waiting {
+            background-color: var(--bg-col-waiting);
+            border-left: 2px solid var(--border);
+        }
 
         input[type="text"] {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             border: 1px solid var(--border);
-            border-radius: 4px;
-            font-size: 1rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
             box-sizing: border-box;
             margin-bottom: 1rem;
-            background-color: var(--bg);
-            color: var(--default);
+            background-color: #1a1a1c;
+            color: var(--text-default);
         }
-        .task-list { margin-bottom: 2rem; }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--text-blue);
+        }
         
-        .task-item {
-            border-bottom: 1px solid var(--border);
-            padding: 10px 0;
-            cursor: grab;
-            transition: opacity 0.2s, filter 0.2s;
+        .task-list { 
+            flex-grow: 1;
+            padding-bottom: 50px; /* buffer for dragging to empty columns */
         }
+        
+        /* Bordio Style Cards */
+        .task-item {
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+            cursor: grab;
+            transition: opacity 0.2s, filter 0.2s, transform 0.1s;
+            border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        /* Card Background Colors */
+        .bg-default { background-color: var(--card-default); }
+        .bg-red { background-color: var(--card-red); }
+        .bg-purple { background-color: var(--card-purple); }
+        .bg-blue { background-color: var(--card-blue); }
+        .bg-green { background-color: var(--card-green); }
+
         .task-item.is-completed {
-            opacity: 0.5;
-            filter: grayscale(40%);
+            opacity: 0.4;
+            filter: grayscale(60%);
         }
         .task-item.dragging {
             opacity: 0.5;
-            background: var(--hover);
+            transform: scale(0.98);
         }
         .task-item.drag-over {
-            border-top: 2px solid var(--blue);
+            border-top: 3px solid var(--text-blue);
         }
+
         .task-main, .subtask-item {
             display: flex;
             align-items: center;
@@ -131,24 +170,24 @@
             flex-grow: 1;
         }
         
-        /* Compact Subtasks */
         .subtasks {
             margin-left: 2.2rem;
-            margin-top: 4px;
+            margin-top: 8px;
         }
         .subtask-item {
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             cursor: default;
         }
         
-        /* Font sizing for hierarchy */
         .task-text {
             flex-grow: 1;
             word-break: break-word;
         }
+        /* Main text is always white-ish since backgrounds are colored */
         .task-main .task-text {
-            font-size: 1.15rem;
+            font-size: 1.1rem;
             font-weight: 600;
+            color: #ffffff;
         }
         .subtask-item .task-text {
             font-size: 0.95rem;
@@ -157,10 +196,11 @@
         
         .completed-text {
             text-decoration: line-through;
-            color: #80868b;
+            opacity: 0.6;
         }
+        
         .purple-badge {
-            background-color: var(--purple);
+            background-color: var(--purple-badge);
             color: white;
             min-width: 20px;
             height: 20px;
@@ -181,14 +221,14 @@
         }
         .star-btn {
             font-size: 1.2rem;
-            color: #fbbc04;
+            color: var(--star);
             background: none;
             border: none;
             cursor: pointer;
             padding: 0;
         }
-        .star-btn.inactive { color: var(--border); }
-        .star-btn:hover { color: #fbbc04; }
+        .star-btn.inactive { color: rgba(255,255,255,0.2); }
+        .star-btn:hover { color: var(--star); }
         
         .action-toggle {
             font-size: 1.2rem;
@@ -197,17 +237,17 @@
             border-radius: 4px;
             background: none;
             border: none;
-            color: var(--default);
+            color: rgba(255,255,255,0.5);
             cursor: pointer;
         }
-        .action-toggle:hover { background-color: var(--surface); }
+        .action-toggle:hover { background-color: rgba(255,255,255,0.1); color: white;}
         .action-menu {
             display: none;
             position: absolute;
             right: 25px;
-            background: var(--bg);
+            background: var(--bg-col-1);
             border: 1px solid var(--border);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
             padding: 5px 10px;
             border-radius: 6px;
             align-items: center;
@@ -216,6 +256,7 @@
             z-index: 10;
         }
         .action-menu.show { display: flex; }
+        
         .color-picker {
             display: flex;
             gap: 5px;
@@ -223,67 +264,100 @@
             padding-right: 10px;
         }
         .color-dot {
-            width: 15px;
-            height: 15px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
             cursor: pointer;
-            border: 1px solid transparent;
+            border: 1px solid rgba(255,255,255,0.2);
         }
-        .color-dot:hover { opacity: 0.8; }
+        /* Color dots for the picker menu */
+        .dot-default { background-color: var(--card-default); }
+        .dot-red { background-color: #ff5252; }
+        .dot-purple { background-color: #e040fb; }
+        .dot-blue { background-color: #448aff; }
+        .dot-green { background-color: #69f0ae; }
+        .color-dot:hover { transform: scale(1.2); }
         
         .icon-btn {
             background: none;
             border: none;
             cursor: pointer;
-            color: #5f6368;
+            color: #9aa0a6;
             font-size: 1rem;
             padding: 0 5px;
         }
-        .icon-btn:hover { color: var(--default); }
+        .icon-btn:hover { color: #ffffff; }
+        
         .add-subtask {
             font-size: 0.85rem;
-            color: var(--blue);
+            color: rgba(255,255,255,0.5);
             margin-left: 2.2rem;
-            margin-top: 2px;
+            margin-top: 4px;
             cursor: pointer;
             display: inline-block;
         }
-        .add-subtask:hover { text-decoration: underline; }
-        .delete-btn { color: var(--red); }
+        .add-subtask:hover { color: white; text-decoration: underline; }
+        .delete-btn { color: #ff5252; }
+        .delete-btn:hover { color: #ff1744; }
+
+        /* Global Completed Section */
+        .completed-section {
+            max-width: 1400px;
+            margin: 2rem auto;
+            background-color: var(--bg-col-1);
+            border-radius: 12px;
+            padding: 1rem;
+            border: 1px solid var(--border);
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header-row">
-        <h1>My Tasks</h1>
-        <div class="header-actions">
-            <button class="theme-toggle" onclick="window.toggleTheme()" title="Toggle Dark Mode">🌙</button>
-            <button id="auth-btn" class="auth-btn" onclick="window.handleAuth()">Login</button>
+<div class="top-nav">
+    <h1>My Tasks</h1>
+    <button id="auth-btn" class="auth-btn" onclick="window.handleAuth()">Login</button>
+</div>
+
+<div id="login-message" class="login-message">
+    Please login with Google to view and sync your tasks.
+</div>
+
+<div id="app-content">
+    <div class="board">
+        <!-- Column 1: My Tasks -->
+        <div class="column" data-column="my-tasks" ondragover="window.dragOverCol(event)" ondrop="window.dropCol(event, 'my-tasks')">
+            <h2 class="col-header">My Tasks</h2>
+            <input type="text" placeholder="Add a new task... (Press Enter)" onkeypress="window.handleNewTask(event, 'my-tasks')">
+            <div id="list-my-tasks" class="task-list"></div>
+        </div>
+
+        <!-- Column 2: Landscape Plans -->
+        <div class="column" data-column="landscape-plans" ondragover="window.dragOverCol(event)" ondrop="window.dropCol(event, 'landscape-plans')">
+            <h2 class="col-header">Landscape Plans</h2>
+            <input type="text" placeholder="Add a landscape plan... (Press Enter)" onkeypress="window.handleNewTask(event, 'landscape-plans')">
+            <div id="list-landscape-plans" class="task-list"></div>
+        </div>
+
+        <!-- Column 3: Waiting -->
+        <div class="column col-waiting" data-column="waiting" ondragover="window.dragOverCol(event)" ondrop="window.dropCol(event, 'waiting')">
+            <h2 class="col-header">Waiting</h2>
+            <input type="text" placeholder="Add to waiting... (Press Enter)" onkeypress="window.handleNewTask(event, 'waiting')">
+            <div id="list-waiting" class="task-list"></div>
         </div>
     </div>
 
-    <div id="login-message" class="login-message">
-        Please login to view and sync your tasks.
-    </div>
-    
-    <div id="app-content">
-        <input type="text" id="new-task" placeholder="Add a new task... (Press Enter)" onkeypress="window.handleNewTask(event)">
-        
-        <div id="active-tasks" class="task-list"></div>
-        
-        <h2>Completed</h2>
-        <div id="completed-tasks" class="task-list"></div>
+    <!-- Global Completed Bottom Section -->
+    <div class="completed-section">
+        <h2 class="col-header">Completed</h2>
+        <div id="list-completed" class="task-list" style="padding-bottom: 0;"></div>
     </div>
 </div>
 
-<!-- Firebase SDKs configured as Modules -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // Your Firebase configuration
     const firebaseConfig = {
         apiKey: "AIzaSyArUbDcAmhwYPoXyVguO7e1lWI12XcLp64",
         authDomain: "my-quick-tasks.firebaseapp.com",
@@ -293,30 +367,24 @@
         appId: "1:790785167345:web:0bc5f6aa1d3f162a4f3e50"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // State management
     let tasks = [];
     let currentUser = null;
     let draggedId = null;
 
-    // Authentication Logic
+    // Authentication
     window.handleAuth = () => {
         if (currentUser) {
             signOut(auth);
         } else {
             const provider = new GoogleAuthProvider();
-            signInWithPopup(auth, provider).catch(error => {
-                console.error("Login failed:", error);
-                alert("Login failed. Please try again.");
-            });
+            signInWithPopup(auth, provider).catch(err => alert("Login failed."));
         }
     };
 
-    // Listen to login state changes
     onAuthStateChanged(auth, (user) => {
         const authBtn = document.getElementById('auth-btn');
         const appContent = document.getElementById('app-content');
@@ -328,10 +396,11 @@
             appContent.style.display = "block";
             loginMessage.style.display = "none";
 
-            // Listen to cloud database changes in real-time
             onSnapshot(doc(db, "users", user.uid), (docSnap) => {
                 if (docSnap.exists()) {
                     tasks = docSnap.data().tasks || [];
+                    // Ensure backwards compatibility for old tasks without a column
+                    tasks.forEach(t => t.column = t.column || 'my-tasks');
                 } else {
                     tasks = [];
                 }
@@ -347,36 +416,17 @@
         }
     });
 
-    // Save to Cloud
     async function saveTasks() {
         if (!currentUser) return;
         try {
             await setDoc(doc(db, "users", currentUser.uid), { tasks: tasks });
         } catch (e) {
-            console.error("Error saving document: ", e);
-            alert("Error saving to cloud. Check your connection.");
+            console.error("Error saving: ", e);
         }
     }
 
-    // Theme Setup
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    updateThemeIcon(savedTheme);
-
-    window.toggleTheme = () => {
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        updateThemeIcon(newTheme);
-    }
-
-    function updateThemeIcon(theme) {
-        document.querySelector('.theme-toggle').textContent = theme === 'light' ? '🌙' : '☀️';
-    }
-
     // Task Actions
-    window.handleNewTask = (e) => {
+    window.handleNewTask = (e, columnId) => {
         if (e.key === 'Enter' && e.target.value.trim() !== '') {
             tasks.push({
                 id: Date.now(),
@@ -384,6 +434,7 @@
                 completed: false,
                 color: 'default',
                 starred: false,
+                column: columnId,
                 subtasks: []
             });
             e.target.value = '';
@@ -444,14 +495,14 @@
     }
 
     window.deleteMainTask = (id) => {
-        if(confirm("Are you sure you want to delete this task?")) {
+        if(confirm("Delete this task?")) {
             tasks = tasks.filter(t => t.id !== id);
             saveTasks();
         }
     }
 
     window.deleteSubtask = (subId, parentId) => {
-        if(confirm("Are you sure you want to delete this subtask?")) {
+        if(confirm("Delete this subtask?")) {
             const parent = tasks.find(t => t.id === parentId);
             parent.subtasks = parent.subtasks.filter(s => s.id !== subId);
             saveTasks();
@@ -470,18 +521,18 @@
         saveTasks();
     }
 
-    // Drag and Drop Logic
+    // Drag and Drop (Updated for Columns)
     window.dragStart = (e, id) => {
         draggedId = id;
         e.target.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
     }
 
-    window.dragOver = (e) => {
-        e.preventDefault();
-        const target = e.target.closest('.task-item');
-        if (target && target.dataset.id != draggedId) {
-            target.classList.add('drag-over');
+    window.dragOverCol = (e) => {
+        e.preventDefault(); // allow drop
+        const targetTask = e.target.closest('.task-item');
+        if (targetTask && targetTask.dataset.id != draggedId) {
+            targetTask.classList.add('drag-over');
         }
     }
 
@@ -490,20 +541,43 @@
         if (target) target.classList.remove('drag-over');
     }
 
-    window.drop = (e, targetId) => {
+    window.dropCol = (e, targetColId) => {
         e.preventDefault();
-        const targetEl = e.target.closest('.task-item');
-        if (targetEl) targetEl.classList.remove('drag-over');
+        if (!draggedId) return;
 
-        if (!draggedId || draggedId === targetId) return;
-
-        const fromIndex = tasks.findIndex(t => t.id === draggedId);
-        const toIndex = tasks.findIndex(t => t.id === targetId);
-
-        const [moved] = tasks.splice(fromIndex, 1);
-        tasks.splice(toIndex, 0, moved);
+        const taskIndex = tasks.findIndex(t => t.id === draggedId);
+        if (taskIndex === -1) return;
         
+        const task = tasks[taskIndex];
+        const targetTaskEl = e.target.closest('.task-item');
+
+        // Dropped onto another task (Reorder)
+        if (targetTaskEl) {
+            targetTaskEl.classList.remove('drag-over');
+            const targetId = parseInt(targetTaskEl.dataset.id);
+            if (targetId === draggedId) return;
+
+            const targetIndex = tasks.findIndex(t => t.id === targetId);
+            const targetTask = tasks[targetIndex];
+
+            // Inherit the column of the task we dropped onto
+            task.column = targetTask.column;
+
+            // Move array element
+            tasks.splice(taskIndex, 1);
+            const newTargetIndex = tasks.findIndex(t => t.id === targetId);
+            tasks.splice(newTargetIndex, 0, task);
+        } 
+        // Dropped into empty space in the column
+        else {
+            task.column = targetColId;
+            // Move to end of array
+            tasks.splice(taskIndex, 1);
+            tasks.push(task);
+        }
+
         draggedId = null;
+        document.querySelectorAll('.task-item').forEach(el => el.classList.remove('drag-over'));
         saveTasks();
     }
 
@@ -521,32 +595,33 @@
         });
         menu.classList.toggle('show');
     }
-
     document.addEventListener('click', () => {
         document.querySelectorAll('.action-menu.show').forEach(m => m.classList.remove('show'));
     });
 
-    // Rendering UI
+    // Render HTML
     function render() {
-        const activeContainer = document.getElementById('active-tasks');
-        const completedContainer = document.getElementById('completed-tasks');
+        const containers = {
+            'my-tasks': document.getElementById('list-my-tasks'),
+            'landscape-plans': document.getElementById('list-landscape-plans'),
+            'waiting': document.getElementById('list-waiting'),
+            'completed': document.getElementById('list-completed')
+        };
         
-        activeContainer.innerHTML = '';
-        completedContainer.innerHTML = '';
+        // Clear all
+        Object.values(containers).forEach(c => c.innerHTML = '');
 
+        // Sort Active
         let activeTasks = tasks.filter(t => !t.completed);
-        activeTasks.sort((a, b) => {
-            if (a.starred === b.starred) return 0;
-            return a.starred ? -1 : 1;
-        });
+        activeTasks.sort((a, b) => (a.starred === b.starred) ? 0 : a.starred ? -1 : 1);
         
         let completedTasks = tasks.filter(t => t.completed);
-        let sortedDisplayTasks = [...activeTasks, ...completedTasks];
 
-        sortedDisplayTasks.forEach(task => {
+        // Render function for a single task
+        const buildTaskHTML = (task) => {
             const taskEl = document.createElement('div');
-            taskEl.className = 'task-item';
-            
+            // Apply Bordio background color class to the whole card
+            taskEl.className = `task-item bg-${task.color}`;
             if (task.completed) taskEl.classList.add('is-completed');
             
             taskEl.dataset.id = task.id;
@@ -554,9 +629,7 @@
             if (!task.completed) {
                 taskEl.draggable = true;
                 taskEl.addEventListener('dragstart', (e) => window.dragStart(e, task.id));
-                taskEl.addEventListener('dragover', window.dragOver);
                 taskEl.addEventListener('dragleave', window.dragLeave);
-                taskEl.addEventListener('drop', (e) => window.drop(e, task.id));
                 taskEl.addEventListener('dragend', window.dragEnd);
             }
 
@@ -565,7 +638,7 @@
                     <div class="task-content">
                         <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="window.toggleTask(${task.id})">
                         ${task.color === 'purple' ? '<span class="purple-badge">?</span>' : ''}
-                        <span class="task-text ${task.completed ? 'completed-text' : ''}" style="color: var(--${task.color})">${task.text}</span>
+                        <span class="task-text ${task.completed ? 'completed-text' : ''}">${task.text}</span>
                     </div>
                     <div class="task-actions-wrapper">
                         ${!task.completed ? `<button class="star-btn ${task.starred ? '' : 'inactive'}" onclick="window.toggleStar(${task.id})" title="Pin Task">${task.starred ? '⭐' : '☆'}</button>` : ''}
@@ -587,7 +660,7 @@
                             <div class="task-content">
                                 <input type="checkbox" ${sub.completed ? 'checked' : ''} onchange="window.toggleTask(${sub.id}, true, ${task.id})">
                                 ${sub.color === 'purple' ? '<span class="purple-badge">?</span>' : ''}
-                                <span class="task-text ${sub.completed ? 'completed-text' : ''}" style="color: var(--${sub.color})">${sub.text}</span>
+                                <span class="task-text ${sub.completed ? 'completed-text' : ''}" style="color: var(--text-${sub.color})">${sub.text}</span>
                             </div>
                             <div class="task-actions-wrapper">
                                 <button class="action-toggle" onclick="window.toggleMenu(event)" title="Options">⋮</button>
@@ -607,12 +680,20 @@
             }
 
             taskEl.innerHTML = html;
+            return taskEl;
+        };
 
-            if (task.completed) {
-                completedContainer.appendChild(taskEl);
-            } else {
-                activeContainer.appendChild(taskEl);
+        // Append active tasks to their respective columns
+        activeTasks.forEach(task => {
+            const colId = task.column || 'my-tasks';
+            if (containers[colId]) {
+                containers[colId].appendChild(buildTaskHTML(task));
             }
+        });
+
+        // Append completed tasks to the bottom section
+        completedTasks.forEach(task => {
+            containers['completed'].appendChild(buildTaskHTML(task));
         });
     }
 
@@ -620,7 +701,7 @@
         const colors = ['red', 'purple', 'blue', 'green', 'default'];
         let picker = '<div class="color-picker">';
         colors.forEach(c => {
-            picker += `<div class="color-dot" title="${c}" style="background-color: var(--${c})" onclick="window.changeColor(${id}, '${c}', ${isSubtask}, ${parentId || null})"></div>`;
+            picker += `<div class="color-dot dot-${c}" title="${c}" onclick="window.changeColor(${id}, '${c}', ${isSubtask}, ${parentId || null})"></div>`;
         });
         picker += '</div>';
         return picker;
