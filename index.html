@@ -309,6 +309,35 @@
             padding: 1rem;
             border: 1px solid var(--border);
         }
+
+        .completed-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .completed-header .col-header { margin-bottom: 0; }
+
+        .clear-completed-btn {
+            background: none;
+            color: #ff8a80;
+            border: 1px solid var(--border);
+            padding: 7px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font: inherit;
+            font-size: 0.85rem;
+        }
+        .clear-completed-btn:hover:not(:disabled) {
+            background-color: var(--hover);
+            border-color: #ff8a80;
+        }
+        .clear-completed-btn:disabled {
+            color: #9aa0a6;
+            cursor: default;
+            opacity: 0.5;
+        }
     </style>
 </head>
 <body>
@@ -348,7 +377,10 @@
 
     <!-- Global Completed Bottom Section -->
     <div class="completed-section">
-        <h2 class="col-header">Completed</h2>
+        <div class="completed-header">
+            <h2 class="col-header">Completed</h2>
+            <button id="clear-completed-btn" class="clear-completed-btn" onclick="window.clearCompleted()" disabled>Clear completed</button>
+        </div>
         <div id="list-completed" class="task-list" style="padding-bottom: 0;"></div>
     </div>
 </div>
@@ -509,6 +541,16 @@
         }
     }
 
+    window.clearCompleted = () => {
+        const completedCount = tasks.filter(task => task.completed).length;
+        if (completedCount === 0) return;
+
+        if (confirm(`Delete ${completedCount} completed ${completedCount === 1 ? 'task' : 'tasks'}?`)) {
+            tasks = tasks.filter(task => !task.completed);
+            saveTasks();
+        }
+    }
+
     window.changeColor = (id, color, isSubtask = false, parentId = null) => {
         if (isSubtask) {
             const parent = tasks.find(t => t.id === parentId);
@@ -616,6 +658,7 @@
         activeTasks.sort((a, b) => (a.starred === b.starred) ? 0 : a.starred ? -1 : 1);
         
         let completedTasks = tasks.filter(t => t.completed);
+        document.getElementById('clear-completed-btn').disabled = completedTasks.length === 0;
 
         // Render function for a single task
         const buildTaskHTML = (task) => {
